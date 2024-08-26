@@ -14,12 +14,22 @@ $ cd koreader-sync-rs
 ```
 $ npx wrangler d1 create prod-kosync
 ```
+
 Take note of the result and update `wrangler.toml` accordingly.
+
+- Create schemas in the D1 database:
+
+**Warning** This command will clear the database. **DO NOT** do this if you are (somehow) doing a migration.
+
+```
+$ npx wrangler d1 execute prod-kosync --remote --file=./schema.sql
+```
 
 - Create a secret for accessing the management API:
 ```
 $ npx wrangler secret put MGM_TOKEN
 ```
+
 The secret can be an arbitrary string, as long as it is kept secret. Anyone with the token is able to access the management API.
 
 - (Optional) Enable registration if you want:
