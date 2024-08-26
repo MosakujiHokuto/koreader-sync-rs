@@ -155,6 +155,13 @@ fn normalize_username(username: &str) -> String {
     username.trim().to_lowercase()
 }
 
+fn registration_enabled(env: &Env) -> bool {
+    match env.var("REGISTRATION") {
+        Ok(var) => var.to_string() == "enabled",
+        _ => false,
+    }
+}
+
 pub async fn healthcheck() -> Json<Value> {
     Json(json!({ "status": "ok" }))
 }
@@ -174,6 +181,9 @@ pub async fn create_user(
         env: Env,
         payload: CreateUserPayload,
     ) -> Result<(StatusCode, Json<Value>)> {
+        if !registration_enabled(&env) {
+            return Ok(Error::UserExists.with_message("Registration is disabled".to_string()));
+        }
         let Ok(d1) = d1_from_env(env) else {
             return Ok(Error::NoDatabase.into_response());
         };
@@ -182,7 +192,7 @@ pub async fn create_user(
         if let Some(_id) = result {
             Ok((StatusCode::CREATED, Json(json!({ "username": username }))))
         } else {
-            Ok(Error::UserExists.into_response())
+            Ok(Error::UserExists.with_message("User already exists".to_string()))
         }
     }
     do_create_user(env, payload)
