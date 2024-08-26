@@ -4,3 +4,8 @@ compatibility_date = "2024-08-25"
 
 [build]
 command = "cargo install -q worker-build && worker-build --release"
+
+[[d1_databases]]
+binding = "DB_PROD_KOSYNC"
+database_name = "prod-kosync"
+database_id = "6372494b-8dd8-474f-b4e8-362dfb8eef0d"
