@@ -162,7 +162,27 @@ fn registration_enabled(env: &Env) -> bool {
     }
 }
 
-pub async fn healthcheck() -> Json<Value> {
+pub async fn healthcheck(State(env): State<Env>) -> Json<Value> {
+    if let Err(err) = env.secret("MGM_TOKEN") {
+        return Json(json!({
+            "status": "failed",
+            "error": {
+            "message": "failed to obtain secret `MGM_TOKEN`",
+            "info": err.to_string()
+        }}));
+    }
+    if let Err(err) = env.d1("DB_PROD_KOSYNC") {
+        return Json(json!({ "status": "failed", "error": {
+            "message": "failed to connect to D1 database",
+            "info": err.to_string()
+        }}));
+    }
+    if let Err(err) = env.var("REGISTRATION") {
+        return Json(json!({ "status": "ok", "warning": {
+            "message": "failed to obtain var `REGISTRATION`",
+            "info": err.to_string()
+        }}));
+    }
     Json(json!({ "status": "ok" }))
 }
 
