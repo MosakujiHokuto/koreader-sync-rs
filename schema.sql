@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS progress;
 DROP TABLE IF EXISTS users;
 CREATE TABLE users (
        id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -5,7 +6,6 @@ CREATE TABLE users (
        password TEXT
 );
 
-DROP TABLE IF EXISTS progress;
 CREATE TABLE progress (
        id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
        document TEXT,

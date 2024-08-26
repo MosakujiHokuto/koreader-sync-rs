@@ -1,3 +1,7 @@
+use argon2::{
+    password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
+    Argon2,
+};
 use axum::{
     extract::{Path, State},
     http::{HeaderMap, StatusCode},
@@ -5,6 +9,7 @@ use axum::{
     Json, Router,
 };
 use chrono;
+use rand::rngs::OsRng;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::str;
@@ -79,11 +84,24 @@ async fn fetch(
     Ok(router(env).call(req).await?)
 }
 
+fn hash_password(pwd: &str) -> std::result::Result<String, argon2::password_hash::Error> {
+    let salt = SaltString::generate(&mut OsRng);
+    let argon2 = Argon2::default();
+    Ok(argon2.hash_password(pwd.as_bytes(), &salt)?.to_string())
+}
+
+fn verify_password(pwd: &str, hash: &str) -> bool {
+    let parsed_hash = PasswordHash::new(hash).expect("Failed to parse hashed password");
+    Argon2::default()
+        .verify_password(pwd.as_bytes(), &parsed_hash)
+        .is_ok()
+}
+
 async fn authenticate(d1: &D1Database, user: &str, pwd: &str) -> Result<Option<u32>> {
     let statement = d1.prepare("SELECT * FROM users WHERE name = ?1");
     let query = statement.bind(&[user.trim().to_lowercase().into()])?;
     if let Some(user) = query.first::<DBUser>(None).await? {
-        if user.password == pwd {
+        if verify_password(pwd, &user.password) {
             Ok(Some(user.id))
         } else {
             Ok(None)
@@ -136,7 +154,12 @@ pub async fn create_user(
             "ON CONFLICT DO NOTHING RETURNING id"
         ));
         let username = payload.username.trim().to_lowercase();
-        let query = statement.bind(&[username.as_str().into(), payload.password.into()])?;
+        let hashed_password = hash_password(&payload.password);
+        let Ok(password) = hashed_password else {
+            let err = hashed_password.unwrap_err();
+            return Ok(Error::Internal.with_message(err.to_string()));
+        };
+        let query = statement.bind(&[username.as_str().into(), password.into()])?;
         if let Some(_id) = query.first::<u32>(Some("id")).await? {
             Ok((StatusCode::CREATED, Json(json!({ "username": username }))))
         } else {
