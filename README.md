@@ -61,7 +61,7 @@ Inspired by [kosync-dotnet](https://github.com/jberlyn/kosync-dotnet), this impl
 
 ### Password storage
 
-As of today it is well known that you should not store plain text of the password into your database. More specifically, password-based authentication should usually be down as follows:
+As of today it is well known that you should not store plain text of the password into your database. More specifically, password-based authentication should usually be done as follows:
 
 1. Client transport the password to server over some secured channel (e.g. TLS), so the password itself can not be eavesdropped en route.
 
@@ -87,7 +87,7 @@ However, the original implementation of the koreader-sync-server chose to let th
 
 4. Break argon2 and obtain the original MD5 hash from argon2 hash
 
-1 and 4 is normally considered impossible as the timing of writing, and in case of 2 and 3, the attacker can probably just mount a much more effective attack than trying to obtain password from the MD5, so the current plan seems secure enough for me.
+1 and 4 is normally considered impossible at the timing of writing, and in case of 2 and 3, the attacker can probably just mount a much more effective attack than trying to obtain password from the MD5, so the current plan seems secure enough for me.
 
 ### Management API
 
